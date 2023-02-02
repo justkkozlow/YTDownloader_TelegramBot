@@ -1,3 +1,5 @@
+import os
+
 import telebot
 from telebot import types
 from pytube import YouTube
@@ -41,15 +43,22 @@ def get_video_from_youtube(callback):
     Обработчик для загрузки видео в выбранном разрешении
     """
     yt = YouTube(youtube_link)
-    if callback.data == 'low':
-        stream = yt.streams.get_lowest_resolution()
-        stream.download("download", filename="video_low.mp4")
-        file = open('download/video_low.mp4', 'rb')
-    elif callback.data == 'hight':
-        stream = yt.streams.get_highest_resolution()
-        stream.download("download", filename="video_hight.mp4")
-        file = open('download/video_hight.mp4', 'rb')
-    bot.send_video(callback.message.chat.id, file)
+    try:
+        if callback.data == 'low':
+            stream = yt.streams.get_lowest_resolution()
+            low_quality_video = stream.download("download")
+            file = open(f'{low_quality_video}', 'rb')
+        elif callback.data == 'hight':
+            stream = yt.streams.get_highest_resolution()
+            hight_quality_video = stream.download("download")
+            file = open(f'{hight_quality_video}', 'rb')
+        bot.send_video(callback.message.chat.id, file)
+    except Exception:
+        bot.send_message(callback.message.chat.id, too_large_file)
+
+
+
+    # bot.send_video(callback.message.chat.id, file)
 
     new_url = bot.send_message(callback.message.chat.id, ctn_url)
     bot.register_next_step_handler(new_url, get_video_resolution)
