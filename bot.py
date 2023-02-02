@@ -1,5 +1,3 @@
-import time
-
 import telebot
 from telebot import types
 from pytube import YouTube
@@ -13,45 +11,40 @@ bot = telebot.TeleBot(TOKEN)
 def start(message):
     """
     This function prompts the user to submit a YouTube URL.
-    :param message:
     """
     sent = bot.reply_to(message, start_message)
-    bot.register_next_step_handler(sent, get_resolution_list)
+    bot.register_next_step_handler(sent, get_video_resolution)
 
 
-def get_resolution_list(message):
+def get_video_resolution(message):
     """
     This function, in response to sending the user's URL, returns a list of video resolutions available for download.
-    :param message:
     """
-    message_to_save = message.text
-    yt = YouTube(message_to_save)
+    global youtube_link
+    youtube_link = message.text
     kb = types.InlineKeyboardMarkup(row_width=3)
-    resolution_list = yt.streams.filter(file_extension="mp4", type="video", progressive=True)
-    for i in resolution_list:
-        btn = types.InlineKeyboardButton(f'{i.resolution} {i.fps}fps', callback_data="!!!")
-        kb.add(btn)
-    stream = yt.streams.get_highest_resolution()
-    stream.download("download", filename="video.mp4")
-    bot.send_message(message.chat.id, choose_resolution_message, reply_markup=kb)  # Answer
-
-
-@bot.message_handler(content_types=["video"])
-def handle_files(message):
-    document_id = message.document.file_id
-    file_info = bot.get_file(document_id)
-    print(document_id)  # Выводим file_id
-    print(f'http://api.telegram.org/file/bot{TOKEN}/{file_info.file_path}')  # Выводим ссылку на файл
-    bot.send_message(message.chat.id, document_id)  # Отправляем пользователю file_id
+    low_resolution = types.InlineKeyboardButton("Low resolution", callback_data='low')
+    hight_resolution = types.InlineKeyboardButton("Hight resolution", callback_data='hight')
+    kb.add(low_resolution, hight_resolution)
+    bot.send_message(message.chat.id, video_is_ready, reply_markup=kb)
 
 
 @bot.callback_query_handler(func=lambda callback: True)
-def send_something(callback):
-    time.sleep(10)
-    if callback.data == "!!!":
-        file = open('download/video.mp4', 'rb')
-        bot.send_message(callback.message.chat.id, "After downloading you can get your video:")
-        bot.send_video(callback.message.chat.id, file)
+def get_video_from_youtube(callback):
+    yt = YouTube(youtube_link)
+    if callback.data == 'low':
+        stream = yt.streams.get_lowest_resolution()
+        stream.download("download", filename="video_low.mp4")
+        file = open('download/video_low.mp4', 'rb')
+    elif callback.data == 'hight':
+        stream = yt.streams.get_highest_resolution()
+        stream.download("download", filename="video_hight.mp4")
+        file = open('download/video_hight.mp4', 'rb')
+
+    bot.send_video(callback.message.chat.id, file)
+    bot.send_message(callback.message.chat.id, "If you want to download new video, snt me URL again")
+
+    # bot.register_next_step_handler(start_message, get_video_resolution)
 
 
-bot.polling()
+bot.polling(none_stop=True, interval=0)
