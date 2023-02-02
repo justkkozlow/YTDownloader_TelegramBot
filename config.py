@@ -1,6 +1,10 @@
+import os
+import dotenv
 
-TOKEN = "5955098633:AAGxFJl7kndcZtqb1pFAhZJtogPduE_HE8A"
+dotenv.load_dotenv('.env')
 
-#message list
+TOKEN = os.environ['TOKEN']  # Telegram bot key
+
+# message list
 start_message = "Sent YouTube URL:"
 choose_resolution_message = "Availble resolution to download:"
