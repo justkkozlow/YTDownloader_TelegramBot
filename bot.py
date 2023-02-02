@@ -10,15 +10,19 @@ bot = telebot.TeleBot(TOKEN)
 @bot.message_handler(commands=['start'])
 def start(message):
     """
-    This function prompts the user to submit a YouTube URL.
+    Handler prompts the user to submit a YouTube URL.
+    /////
+    Обработчик предлагает пользователю отправить URL-адрес YouTube.
     """
-    sent = bot.reply_to(message, start_message)
+    sent = bot.send_message(message.chat.id, sent_url)
     bot.register_next_step_handler(sent, get_video_resolution)
 
 
 def get_video_resolution(message):
     """
-    This function, in response to sending the user's URL, returns a list of video resolutions available for download.
+    Handler, in response to sending the user's URL, ask what resolution quality to download video
+    /////
+    Обработчик, в ответ на отправку URL пользователя, спрашивает в каком разрешении скачивать видео
     """
     global youtube_link
     youtube_link = message.text
@@ -31,6 +35,11 @@ def get_video_resolution(message):
 
 @bot.callback_query_handler(func=lambda callback: True)
 def get_video_from_youtube(callback):
+    """
+    Handler for downloading video in selected resolution
+    /////
+    Обработчик для загрузки видео в выбранном разрешении
+    """
     yt = YouTube(youtube_link)
     if callback.data == 'low':
         stream = yt.streams.get_lowest_resolution()
@@ -40,11 +49,11 @@ def get_video_from_youtube(callback):
         stream = yt.streams.get_highest_resolution()
         stream.download("download", filename="video_hight.mp4")
         file = open('download/video_hight.mp4', 'rb')
-
     bot.send_video(callback.message.chat.id, file)
-    bot.send_message(callback.message.chat.id, "If you want to download new video, snt me URL again")
 
-    # bot.register_next_step_handler(start_message, get_video_resolution)
+    new_url = bot.send_message(callback.message.chat.id, ctn_url)
+    bot.register_next_step_handler(new_url, get_video_resolution)
 
 
-bot.polling(none_stop=True, interval=0)
+if __name__ == '__main__':
+    bot.polling(none_stop=True, interval=0)
