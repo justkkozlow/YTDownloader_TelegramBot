@@ -6,6 +6,7 @@ dotenv.load_dotenv('.env')
 TOKEN = os.environ['TOKEN']  # Telegram bot key
 
 # message list
+welcome_btn = "НАЧАТЬ"
 sent_url = "Отправьте мне YouTube ссылку"
 url_error = "Некорректная ссылка"
 video_is_ready = "В каком качестве скачать видео?"
